@@ -1,12 +1,82 @@
 <script setup lang="ts">
 import { getAuthUrl } from '../services/api'
 
-const commandGroups = [
-  ['/ask', '/about', '/echo'],
-  ['/time', '/uptime', '/ping'],
-  ['/fb', '/link', '/me'],
-  ['/random', '/mem', '/top'],
-  ['/history', '/help', '/h'],
+const commandCards = [
+  {
+    command: '/ask <question>',
+    aliases: [],
+    description: 'Hỏi Gemini với ngữ cảnh dữ liệu đã lưu.',
+  },
+  {
+    command: '/weather [day] [location]',
+    aliases: [],
+    description: 'Xem thời tiết hôm nay hoặc tối đa 5 ngày tới (mặc định Đà Nẵng).',
+  },
+  {
+    command: '/pick [-n <số lượng>] -l item1; item2; item3',
+    aliases: [],
+    description: 'Chọn ngẫu nhiên 1 hoặc nhiều mục trong danh sách ngăn cách bằng dấu ;.',
+  },
+  {
+    command: '/random',
+    aliases: [],
+    description: 'Sinh tỉ lệ ngẫu nhiên hoặc số trong khoảng /random <min> <max>.',
+  },
+  {
+    command: '/time',
+    aliases: ['/gio', '/keo'],
+    description: 'Trả về giờ hệ thống theo múi giờ bot.',
+  },
+  {
+    command: '/uptime',
+    aliases: ['/up'],
+    description: 'Hiển thị thời gian bot đã chạy.',
+  },
+  {
+    command: '/ping',
+    aliases: [],
+    description: 'Kiểm tra phản hồi và độ trễ cơ bản của bot.',
+  },
+  {
+    command: '/echo <text>',
+    aliases: ['/say'],
+    description: 'Bot nhại lại nội dung bạn gửi.',
+  },
+  {
+    command: '/about',
+    aliases: ['/info'],
+    description: 'Thông tin nhanh về bot và hệ thống.',
+  },
+  {
+    command: '/fb, /link',
+    aliases: [],
+    description: 'Trả về các liên kết cộng đồng (group/page/discord/website).',
+  },
+  {
+    command: '/me',
+    aliases: [],
+    description: 'Hiển thị tên Facebook và ID của người gửi.',
+  },
+  {
+    command: '/mem',
+    aliases: [],
+    description: 'Thống kê số người đã nhắn bot.',
+  },
+  {
+    command: '/top',
+    aliases: [],
+    description: 'Top người gửi tin nhắn nhiều nhất.',
+  },
+  {
+    command: '/history',
+    aliases: [],
+    description: 'Lịch sử 10 tin nhắn gần nhất của bạn.',
+  },
+  {
+    command: '/help',
+    aliases: ['/h'],
+    description: 'Hiển thị danh sách lệnh hỗ trợ.',
+  },
 ]
 
 const featureCards = [
@@ -16,7 +86,7 @@ const featureCards = [
   },
   {
     title: 'Bot commands',
-    copy: 'Bot đã có /ask, /about, /echo, /time, /uptime, /ping, /fb, /link, /me, /random, /mem, /top, /history và /help.',
+    copy: 'Bot đã có nhóm lệnh AI, thời tiết, random/pick, social links và lệnh thống kê vận hành.',
   },
   {
     title: 'Public routes',
@@ -47,13 +117,15 @@ const loginUrl = getAuthUrl()
     <aside class="hero-side">
       <div class="panel">
         <h2 class="section-title">Bot commands</h2>
-        <p class="section-copy">Nhóm lệnh hiện tại của bot, đã tách file theo từng command ở backend.</p>
+        <p class="section-copy">Danh sách lệnh đang active trên backend Node, kèm mô tả nhanh cho từng lệnh.</p>
 
         <div class="command-grid" style="margin-top: 18px">
-          <div v-for="group in commandGroups" :key="group.join('-')" class="command-card">
-            <div class="keywords">
-              <span v-for="command in group" :key="command" class="command-pill">{{ command }}</span>
+          <div v-for="item in commandCards" :key="item.command" class="command-card">
+            <div class="keywords" style="margin-bottom: 8px">
+              <span class="command-pill">{{ item.command }}</span>
+              <span v-for="alias in item.aliases" :key="alias" class="command-pill">{{ alias }}</span>
             </div>
+            <p class="card-copy" style="margin: 0">{{ item.description }}</p>
           </div>
         </div>
       </div>

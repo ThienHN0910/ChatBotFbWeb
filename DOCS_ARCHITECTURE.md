@@ -1,96 +1,88 @@
-# BotFacebook Architecture Notes
+# BotFacebook Web Architecture
 
 ## Overview
 
-This repository is split into two active application surfaces:
+This workspace (`chatbotfbweb`) contains the Vue 3 frontend application used by BotFacebook.
+It is designed to work with a separate backend service (normally `chatbotfbNode`).
 
-- Vue 3 SPA frontend at `BotFacebook.Api/BotFacebook.Web`
-- ASP.NET Core 8.0 backend at `BotFacebook.Api/BotFacebook.Api`
+Frontend app root: `BotFacebook.Web`
 
-The original Node/Express source tree was removed from the repo root.
+## Tech Stack
 
-## Frontend responsibilities
+- Vue 3
+- Vue Router 4
+- TypeScript
+- Vite
 
-- Render the landing page, dashboard, policy page, and term page.
-- Call backend endpoints with `fetch` and `credentials: include`.
-- Use `VITE_API_BASE_URL` to point at the backend host.
-- If `VITE_API_BASE_URL` is omitted, the frontend uses relative `/api/...` URLs, which only works when the frontend is served from the same origin as the backend.
-- Redirect login/logout actions through backend auth endpoints.
+## Routing Model
 
-Key routes:
+Defined in `BotFacebook.Web/src/router/index.ts`:
 
-- `/` - product landing page
-- `/dashboard` - admin dashboard
-- `/policy` - privacy policy
-- `/term` - terms of service
+- `/` -> Home view
+- `/dashboard` -> Dashboard view
+- `/policy` -> Policy view
+- `/term` -> Terms view
+- Fallback route redirects to `/`
 
-## Backend responsibilities
+Route components are lazy-loaded.
 
-- Facebook webhook verification and event intake.
-- Bot message processing and command dispatch.
-- MongoDB access for knowledge base and authorized users.
-- Google OAuth callback and cookie session creation.
-- JSON CRUD API used by the Vue dashboard.
+## API Access Model
 
-Key backend endpoints:
+Implemented in `BotFacebook.Web/src/services/api.ts`:
 
-- `GET /webhook` - Facebook verification
-- `POST /webhook` - Facebook message receive
-- `GET /api/auth` - start Google OAuth
-- `GET /api/auth/callback` - OAuth callback
-- `GET /api/dashboard` - dashboard data
-- `POST /api/dashboard` - create dashboard records
-- `PUT /api/dashboard` - update dashboard records
-- `DELETE /api/dashboard` - delete dashboard records
-- `GET /api/logout` - clear cookies and redirect back to the frontend
+- `resolveApiUrl(path)`
+: Resolves relative URL or prefixes `VITE_API_BASE_URL`.
+- `requestJson<T>(path, init)`
+: Wrapper around `fetch`, always uses `credentials: include`.
+- `getAuthUrl()` and `getLogoutUrl()`
+: Build backend auth links.
 
-## Configuration
+## Integration Contract (Backend)
 
-Backend config is split between `appsettings.json` and environment variables.
+Expected backend endpoints:
 
-Important values:
+- `GET /api/auth`
+- `GET /api/logout`
+- `GET /api/dashboard`
+- `POST /api/dashboard`
+- `PUT /api/dashboard`
+- `DELETE /api/dashboard`
 
-- `Mongo__ConnectionString`
-- `Mongo__DatabaseName`
-- `Facebook__PageAccessToken`
-- `Facebook__PageId`
-- `Facebook__GraphApiVersion`
-- `Gemini__ApiKey`
-- `Webhook__VerifyToken`
-- `Auth__GoogleClientId`
-- `Auth__GoogleClientSecret`
-- `Auth__OAuthRedirect`
-- `Auth__FrontendBaseUrl`
-- `Auth__SessionSecret`
+The frontend does not implement webhook functionality. All webhook logic remains on backend.
 
-Frontend config:
+## Home Page Content Contract
 
-- `VITE_API_BASE_URL`
-- See `BotFacebook.Api/BotFacebook.Web/.env.example` for the frontend sample file.
+Home page (`src/views/HomeView.vue`) presents:
 
-## Runtime flow
+- Current bot command list
+- Per-command short descriptions
+- Login and dashboard navigation actions
 
-1. User opens the Vue app.
-2. Dashboard calls backend JSON endpoints.
-3. If the session is missing, the frontend shows a Google login button.
-4. Google OAuth returns to the backend callback.
-5. Backend validates the email against MongoDB, sets the cookie session, and redirects to the Vue `/dashboard` route.
-6. The Vue dashboard reloads data using the authenticated cookie.
+The command cards should stay aligned with backend command handlers in `chatbotfbNode/src/botCommands`.
 
-## Build checks
+## Environment Variables
 
-- Backend: `dotnet build BotFacebook.Api/BotFacebook.Api.sln -c Release`
-- Frontend: `cd BotFacebook.Api/BotFacebook.Web && npm run build`
+Supported frontend env vars:
 
-## Deployment notes
+- `VITE_API_BASE_URL` (optional)
 
-- Keep the frontend origin in `Auth__FrontendBaseUrl` so login redirects and CORS stay aligned.
-- If the backend and frontend are deployed separately, the Vue app must point `VITE_API_BASE_URL` at the backend host.
-- The frontend does not replace the webhook endpoint. The webhook still lives in ASP.NET Core.
-- Current production hosts:
-	- Frontend: `https://chat-bot-fb-lime.vercel.app`
-	- Backend: `https://chatbotfb-production.up.railway.app`
-- Smoke test after deploy:
-	- `GET /` on Railway should return the API health payload.
-	- `GET /api/auth` on Railway should redirect to Google, not 404.
-	- `GET /api/dashboard` without a cookie should return 401, not 404.
+Behavior:
+
+- With value: calls are sent to the configured backend origin.
+- Without value: calls use same-origin relative `/api/...` paths.
+
+## Build and Run
+
+```bash
+cd BotFacebook.Web
+npm install
+npm run dev
+npm run build
+npm run preview
+```
+
+## Deployment Notes
+
+- Ensure backend CORS and cookie policy allow the frontend origin.
+- Ensure backend `Auth__FrontendBaseUrl` points to deployed frontend URL.
+- For SPA hosting, configure fallback rewrite to `index.html` for unknown routes.

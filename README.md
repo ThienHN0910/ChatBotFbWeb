@@ -1,83 +1,76 @@
-# BotFacebook Migration
+# BotFacebook Web (Vue 3)
 
-This repository now uses a Vue 3 frontend plus an ASP.NET Core Web API backend.
+`chatbotfbweb` is the standalone frontend workspace for BotFacebook.
 
-## Layout
+## What this project contains
 
-- `BotFacebook.Api/BotFacebook.Api` - ASP.NET Core 8 backend for webhook, dashboard API, auth, MongoDB, and Gemini/Facebook integration.
-- `BotFacebook.Api/BotFacebook.Web` - Vue 3 SPA for the public pages and admin dashboard.
+- Vue 3 + TypeScript SPA (`BotFacebook.Web`)
+- Route-based pages: Home, Dashboard, Policy, Term
+- API client with cookie-based requests (`credentials: include`)
+- Auth redirect links to backend `/api/auth` and `/api/logout`
 
-## What the app does
+## Folder Layout
 
-- Facebook webhook verification and message receive flow.
-- Dashboard CRUD for knowledge base and authorized users.
-- Google login for the dashboard with cookie-based session auth.
-- Public `/policy` and `/term` pages in Vue.
-- Bot command support kept in the backend: `/ask`, `/time`, `/keo`, `/mem`, `/top`, `/history`, `/help`, and related aliases.
+- `BotFacebook.Web/src/views/HomeView.vue`
+: Landing page with command overview and navigation actions.
+- `BotFacebook.Web/src/views/DashboardView.vue`
+: Admin dashboard UI for knowledge and authorized users.
+- `BotFacebook.Web/src/views/PolicyView.vue`
+: Privacy policy page.
+- `BotFacebook.Web/src/views/TermView.vue`
+: Terms page.
+- `BotFacebook.Web/src/services/api.ts`
+: API URL resolver + JSON request helpers.
+- `BotFacebook.Web/src/router/index.ts`
+: Lazy-loaded route setup.
 
-## Backend setup
+## Backend Integration
 
-Environment values are loaded from `.env` and appsettings. Use `__` in environment variable names when targeting nested config sections.
+Frontend expects backend endpoints compatible with the Node project (`chatbotfbNode`):
 
-Examples:
+- `/api/auth`
+- `/api/logout`
+- `/api/dashboard`
+- `/health` (optional for monitoring)
 
-- `Mongo__ConnectionString`
-- `Mongo__DatabaseName`
-- `Facebook__PageAccessToken`
-- `Facebook__PageId`
-- `Facebook__GraphApiVersion`
-- `Gemini__ApiKey`
-- `Webhook__VerifyToken`
-- `Auth__GoogleClientId`
-- `Auth__GoogleClientSecret`
-- `Auth__OAuthRedirect`
-- `Auth__FrontendBaseUrl`
-- `Auth__SessionSecret`
+When `VITE_API_BASE_URL` is set, requests go to that host.
+When omitted, frontend uses relative paths.
 
-Run the backend:
+## Command Display
 
-```bash
-dotnet build BotFacebook.Api/BotFacebook.Api.sln -c Release
-dotnet run --project BotFacebook.Api/BotFacebook.Api/BotFacebook.Api.csproj
-```
+Home page command cards are synced with current backend command set, including:
 
-## Frontend setup
+- `/ask`, `/weather`, `/pick`, `/random`
+- `/time`, `/uptime`, `/ping`
+- `/about`, `/echo`, `/fb`, `/link`, `/me`
+- `/mem`, `/top`, `/history`, `/help`
 
-The Vue app calls the backend API with `credentials: include`, so set the API base URL in the frontend environment if the frontend and backend are hosted on different origins.
+Each command includes a short description in UI.
 
-Example file:
-
-- `BotFacebook.Api/BotFacebook.Web/.env.example`
-
-Example:
-
-- `VITE_API_BASE_URL=https://your-botfb-api-host`
-
-Current production split:
-
-- Frontend: `https://chat-bot-fb-lime.vercel.app`
-- Backend: `https://chatbotfb-production.up.railway.app`
-
-If you deploy frontend and backend on the same origin, the app can still fall back to relative `/api/...` URLs when `VITE_API_BASE_URL` is omitted.
-
-Run the frontend:
+## Local Development
 
 ```bash
-cd BotFacebook.Api/BotFacebook.Web
+cd BotFacebook.Web
 npm install
 npm run dev
 ```
 
-Build the frontend:
+## Build
 
 ```bash
-cd BotFacebook.Api/BotFacebook.Web
+cd BotFacebook.Web
 npm run build
+npm run preview
 ```
 
-## Notes
+## Environment
 
-- The old Node/Express source was removed from the root of this repo.
-- The dashboard login flow redirects back to the Vue route `/dashboard`.
-- `FrontendBaseUrl` in the backend auth settings must match the Vue app origin for CORS and post-login redirects.
-- If `GET /api/auth` returns 404 on Railway, the backend deployment is not running this repo's ASP.NET app and must be redeployed from `BotFacebook.Api/BotFacebook.Api.csproj`.
+Frontend supports:
+
+- `VITE_API_BASE_URL` (optional)
+
+Example:
+
+```env
+VITE_API_BASE_URL=http://localhost:5000
+```
