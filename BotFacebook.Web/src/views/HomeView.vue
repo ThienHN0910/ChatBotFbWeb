@@ -7,8 +7,6 @@ const commandGroups = [
   ['/fb', '/link', '/me'],
   ['/random', '/mem', '/top'],
   ['/history', '/help', '/h'],
-  ['/gio', '/keo', '/say'],
-  ['/info', '/up'],
 ]
 
 const featureCards = [
