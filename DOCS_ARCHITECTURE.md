@@ -7,6 +7,14 @@ It is designed to work with a separate backend service (normally `chatbotfbNode`
 
 Frontend app root: `BotFacebook.Web`
 
+## Boundary With Backend Repo
+
+- Frontend repository (`chatbotfbweb`) handles UI, routing, and API calls only.
+- Backend repository (`chatbotfbNode`) handles webhook processing, MongoDB access, and Gemini interactions.
+- `/ask` 2-stage retrieval (metadata planning -> selective knowledge fetch -> final answer) is backend-owned.
+
+This separation keeps frontend deployment independent from bot runtime logic changes.
+
 ## Tech Stack
 
 - Vue 3
@@ -49,6 +57,22 @@ Expected backend endpoints:
 - `DELETE /api/dashboard`
 
 The frontend does not implement webhook functionality. All webhook logic remains on backend.
+
+## End-to-End Request Flows
+
+Dashboard flow:
+
+1. User opens frontend route (`/dashboard`).
+2. Frontend calls backend `/api/dashboard` with cookie credentials.
+3. Backend validates session, reads/writes MongoDB, returns JSON.
+4. Frontend updates UI state.
+
+Bot chat flow (owned by backend):
+
+1. Facebook sends webhook event to backend.
+2. Backend command processor executes `/ask` or other command.
+3. Backend may run Gemini planner + answer flow and sends message to user.
+4. Frontend is not part of this runtime path.
 
 ## Home Page Content Contract
 

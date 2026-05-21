@@ -2,6 +2,16 @@
 
 `chatbotfbweb` is the standalone frontend workspace for BotFacebook.
 
+## Project Role In 2-Repo Setup
+
+`chatbotfbweb` is the admin/user-facing UI layer:
+
+- It does not process Facebook webhooks.
+- It does not call Gemini directly.
+- It depends on backend APIs from `chatbotfbNode` for auth and dashboard data.
+
+In short: this repo is the control panel, while backend repo is the execution engine.
+
 ## What this project contains
 
 - Vue 3 + TypeScript SPA (`BotFacebook.Web`)
@@ -35,6 +45,9 @@ Frontend expects backend endpoints compatible with the Node project (`chatbotfbN
 
 When `VITE_API_BASE_URL` is set, requests go to that host.
 When omitted, frontend uses relative paths.
+
+The new 2-stage `/ask` retrieval logic lives fully in backend (`chatbotfbNode`).
+Frontend does not need API changes for that feature.
 
 ## Command Display
 
@@ -74,3 +87,11 @@ Example:
 ```env
 VITE_API_BASE_URL=http://localhost:5000
 ```
+
+## Recommended Local Pairing
+
+Run both repos together during development:
+
+1. Start backend (`chatbotfbNode`) at port `5000`.
+2. Start frontend (`chatbotfbweb/BotFacebook.Web`) with `VITE_API_BASE_URL=http://localhost:5000`.
+3. Access dashboard from frontend and verify data comes from backend MongoDB.
